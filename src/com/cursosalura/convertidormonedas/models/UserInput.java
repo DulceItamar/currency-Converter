@@ -3,7 +3,7 @@ package com.cursosalura.convertidormonedas.models;
 public class UserInput {
     private float currencyValue;
 
-    private float newValue;
+    private float newCurrencyValue;
     private String currentCurrency;
     private String newCurrency;
 
@@ -32,13 +32,13 @@ public class UserInput {
         this.newCurrency = newCurrency;
     }
 
-    public float getNewValue() {
-        return newValue;
+    public float getNewCurrencyValue() {
+        return newCurrencyValue;
     }
 
-    public void setNewValue(float newValue) {
+    public void setNewCurrencyValue(float newCurrencyValue) {
 
 
-        this.newValue = newValue;
+        this.newCurrencyValue = newCurrencyValue;
     }
 }

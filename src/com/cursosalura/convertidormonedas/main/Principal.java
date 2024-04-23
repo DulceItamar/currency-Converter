@@ -2,11 +2,14 @@ package com.cursosalura.convertidormonedas.main;
 
 import com.cursosalura.convertidormonedas.calculation.MessageForUser;
 import com.cursosalura.convertidormonedas.calculation.RequestData;
+import com.cursosalura.convertidormonedas.calculation.WriteRequests;
 import com.cursosalura.convertidormonedas.exceptions.InvalidOptionsException;
 import com.cursosalura.convertidormonedas.exceptions.ProgramExitException;
 import com.cursosalura.convertidormonedas.models.ExchangeRateInput;
 import com.cursosalura.convertidormonedas.models.UserInput;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
@@ -15,15 +18,20 @@ public class Principal {
 
         MessageForUser messageData = new MessageForUser();
         Scanner scanner = new Scanner(System.in);
-        UserInput model = new UserInput();
+
 
         RequestData requestData = new RequestData();
+        WriteRequests writer = new WriteRequests();
+        ArrayList<UserInput> allElements = new ArrayList<>();
+
+
         messageData.showCurrencyMessage();
 
         while (true) {
 
 
             try {
+                UserInput model = new UserInput();
 
                 messageData.showMessageToUser("cambiar");
                 model.setCurrentCurrency(getCurrencyFromUser(scanner));
@@ -36,10 +44,11 @@ public class Principal {
 
                 float factor = data.conversion_rates().get(model.getNewCurrency());
 
-                conversionMethod(model.getCurrentCurrency(), model.getNewCurrency(), factor, scanner);
+                conversionMethod( factor, scanner, model);
+                allElements.add(model);
 
 
-                if(!otherOptions(scanner, messageData)){
+                if(!otherOptions(scanner, messageData, writer, model, allElements)){
                     System.out.println("Gracias por usar nuestros servicios, vuelva pronto.");
                     break;
                 }
@@ -53,6 +62,8 @@ public class Principal {
             } catch (InputMismatchException e) {
                 scanner.nextLine();
                 System.out.println("Error, Ingrese un valor válido.");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
     }
@@ -176,21 +187,25 @@ public class Principal {
 
     }
 
-    private static void conversionMethod(String currentCurrency, String newCurrency, float conversionFactor, Scanner scanner) {
+    private static void conversionMethod(float conversionFactor, Scanner scanner, UserInput model) {
         float changedCurrency;
         float valueToChange;
         System.out.print("Ingrese el valor monetario que desea convertir: $ ");
-        valueToChange = scanner.nextFloat();
-        changedCurrency = valueToChange * conversionFactor;
-        float changedCurrencyRound = (float) (Math.round(changedCurrency * 100.00) / 100.00);
+        model.setCurrencyValue(scanner.nextFloat());
+
+        changedCurrency = model.getCurrencyValue() * conversionFactor;
+
+        model.setNewCurrencyValue((float) (Math.round(changedCurrency * 100.00) / 100.00));
+
+
 
         System.out.println("\n------------------------------------------------------------");
-        System.out.println("El valor de cambio de " + valueToChange + " " + currentCurrency + " a " + newCurrency +
-                " es de $ " + changedCurrencyRound + " (" + newCurrency + ").");
+        System.out.println("El valor de cambio de " + model.getCurrencyValue() + " " + model.getCurrentCurrency() + " a " + model.getNewCurrency() +
+                " es de $ " + model.getNewCurrencyValue() + " (" + model.getNewCurrency() + ").");
         System.out.println("------------------------------------------------------------");
     }
 
-    private static boolean otherOptions(Scanner scanner, MessageForUser messageData) {
+    private static boolean otherOptions(Scanner scanner, MessageForUser messageData, WriteRequests writer, UserInput model, ArrayList<UserInput> allElements) throws IOException {
         int continueConvert;
 
         System.out.println("\n¿Desea hacer otra conversión? Selecciona el número de la opción que prefieras.");
@@ -203,17 +218,26 @@ public class Principal {
             return true;
 
         } else if (continueConvert == 2) {
+            allElements.clear();
             return false;
         } else if (continueConvert == 3) {
-            System.out.println("Persistir datos");
+            writeAFile(writer,model, allElements );
 
             return false;
         } else {
             System.out.println("(Opción inválida, por favor intente de nuevo. ");
-            return otherOptions(scanner, messageData);
+            return otherOptions(scanner, messageData, writer, model, allElements);
         }
+    }
 
+    public static void writeAFile(WriteRequests writer, UserInput model, ArrayList<UserInput> allElements) throws IOException {
 
+       try {
+
+           writer.saveJson(allElements);
+       } catch (IOException e){
+           System.out.println(e.getMessage());
+       }
     }
 
 }
