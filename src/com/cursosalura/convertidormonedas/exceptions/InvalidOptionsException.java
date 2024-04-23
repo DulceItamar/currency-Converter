@@ -1,0 +1,9 @@
+package com.cursosalura.convertidormonedas.exceptions;
+
+public class InvalidOptionsException extends Exception {
+    public  InvalidOptionsException(String message) {
+        super(message);
+    }
+
+
+}
